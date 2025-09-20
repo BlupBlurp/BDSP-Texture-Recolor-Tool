@@ -489,7 +489,7 @@ public class BDSPTextureRandomizer : IDisposable
 
             // Extract and process textures
             var modifiedTextures = await _extractionService.ExtractAndProcessTexturesAsync(
-                bundleFile, colorParams);
+                bundleFile, colorParams, _colorService);
 
             if (modifiedTextures.Count == 0)
             {

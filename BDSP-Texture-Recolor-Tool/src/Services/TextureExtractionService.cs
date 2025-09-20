@@ -50,9 +50,10 @@ public class TextureExtractionService : IDisposable
     /// </summary>
     /// <param name="bundleFile">Bundle file instance</param>
     /// <param name="colorParams">Color parameters for this bundle</param>
+    /// <param name="colorService">Color randomization service to use</param>
     /// <returns>Dictionary of texture names and their modified data</returns>
     public async Task<Dictionary<string, ModifiedTexture>> ExtractAndProcessTexturesAsync(
-        BundleFileInstance bundleFile, BundleColorParameters colorParams)
+        BundleFileInstance bundleFile, BundleColorParameters colorParams, ColorRandomizationService? colorRandomizationService = null)
     {
         var modifiedTextures = new Dictionary<string, ModifiedTexture>();
 
@@ -80,7 +81,7 @@ public class TextureExtractionService : IDisposable
                     var assetFile = _assetsManager.LoadAssetsFileFromBundle(bundleFile, dirInfo.Name);
                     if (assetFile == null) continue;
 
-                    ProcessAssetsFile(assetFile, colorParams, modifiedTextures);
+                    ProcessAssetsFile(assetFile, colorParams, modifiedTextures, colorRandomizationService);
                 }
             });
 
@@ -100,7 +101,8 @@ public class TextureExtractionService : IDisposable
     private void ProcessAssetsFile(
         AssetsFileInstance fileInst,
         BundleColorParameters colorParams,
-        Dictionary<string, ModifiedTexture> modifiedTextures)
+        Dictionary<string, ModifiedTexture> modifiedTextures,
+        ColorRandomizationService? colorRandomizationService)
     {
         try
         {
@@ -111,7 +113,7 @@ public class TextureExtractionService : IDisposable
             {
                 try
                 {
-                    ProcessSingleTexture(fileInst, asset, colorParams, modifiedTextures);
+                    ProcessSingleTexture(fileInst, asset, colorParams, modifiedTextures, colorRandomizationService);
                 }
                 catch (Exception ex)
                 {
@@ -133,7 +135,8 @@ public class TextureExtractionService : IDisposable
         AssetsFileInstance fileInst,
         AssetFileInfo assetInfo,
         BundleColorParameters colorParams,
-        Dictionary<string, ModifiedTexture> modifiedTextures)
+        Dictionary<string, ModifiedTexture> modifiedTextures,
+        ColorRandomizationService? colorRandomizationService)
     {
         try
         {
@@ -195,8 +198,8 @@ public class TextureExtractionService : IDisposable
             }
 
             // Apply color randomization
-            var colorService = new ColorRandomizationService();
-            var modifiedImage = colorService.RandomizeTextureColor(decodedImage, colorParams, textureFile.m_Name);
+            var colorServiceToUse = colorRandomizationService ?? new ColorRandomizationService();
+            var modifiedImage = colorServiceToUse.RandomizeTextureColor(decodedImage, colorParams, textureFile.m_Name);
 
             // Encode back to original format
             var encodedData = EncodeTexture(modifiedImage, (TextureFormat)textureFile.m_TextureFormat);
@@ -359,7 +362,7 @@ public class TextureExtractionService : IDisposable
             if (encodedData != null)
             {
                 _logger.Debug("Successfully converted texture to RGBA32, Size: {Size} bytes",
-                    targetFormat, encodedData.Length);
+                    encodedData.Length);
                 return encodedData;
             }
 

@@ -80,6 +80,9 @@ public class ColorRandomizationService
             _logger.Debug("Applying type-based coloring - Type: {Type}, Algorithm: {Algorithm}",
                 colorParams.PokemonType, colorParams.Algorithm);
 
+            _logger.Debug("Service availability check - Algorithm: {Algorithm}, AnalysisService: {AnalysisService}, ReplacementService: {ReplacementService}, PaletteService: {PaletteService}",
+                colorParams.Algorithm, _colorAnalysisService != null, _colorReplacementService != null, _typeColorPaletteService != null);
+
             // Use advanced color replacement algorithm if available and requested
             if (colorParams.Algorithm == ColorAlgorithm.ColorReplacement &&
                 _colorAnalysisService != null && _colorReplacementService != null && _typeColorPaletteService != null)
@@ -106,6 +109,9 @@ public class ColorRandomizationService
     /// </summary>
     private Image<Rgba32> ApplyAdvancedColorReplacement(Image<Rgba32> sourceImage, BundleColorParameters colorParams, string textureName)
     {
+        _logger.Debug("ApplyAdvancedColorReplacement called - Services available: Analysis={AnalysisService}, Replacement={ReplacementService}, Palette={PaletteService}",
+            _colorAnalysisService != null, _colorReplacementService != null, _typeColorPaletteService != null);
+
         if (_colorAnalysisService == null || _colorReplacementService == null || _typeColorPaletteService == null)
         {
             _logger.Warning("Advanced color replacement services not available, falling back to HSV transformation");
