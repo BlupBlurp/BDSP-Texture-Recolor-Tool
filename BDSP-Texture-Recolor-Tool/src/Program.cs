@@ -42,6 +42,9 @@ public class Program
         [Option("algorithm", Required = false, Default = "ColorReplacement", HelpText = "Color algorithm for TypeBased mode: HueShift or ColorReplacement")]
         public string Algorithm { get; set; } = "ColorReplacement";
 
+        [Option('f', "compression-format", Required = false, Default = "RGBA32", HelpText = "Texture compression format for reinsertion: RGBA32 (uncompressed, default) or BC7 (high quality compression)")]
+        public string CompressionFormat { get; set; } = "RGBA32";
+
         [Option('d', "data-path", Required = false, HelpText = "Path to PersonalTable.json for type-based coloring (required for TypeBased mode)")]
         public string? PokemonDataPath { get; set; }
 
@@ -72,7 +75,7 @@ public class Program
 
         try
         {
-            Log.Information("BDSP Texture Recolor Tool v1.1.0");
+            Log.Information("BDSP Texture Recolor Tool v1.2.0");
             Log.Information("==================================");
             Log.Information("Input Path: {InputPath}", options.InputPath);
             Log.Information("Output Path: {OutputPath}", options.OutputPath);
@@ -115,6 +118,13 @@ public class Program
             if (!Enum.TryParse<ColorAlgorithm>(options.Algorithm, true, out var algorithm))
             {
                 Log.Error("Invalid algorithm: {Algorithm}. Valid algorithms are: HueShift, ColorReplacement", options.Algorithm);
+                return 1;
+            }
+
+            // Parse and validate compression format
+            if (!Enum.TryParse<TextureCompressionFormat>(options.CompressionFormat, true, out var compressionFormat))
+            {
+                Log.Error("Invalid compression format: {CompressionFormat}. Valid formats are: RGBA32, BC7", options.CompressionFormat);
                 return 1;
             }
 
@@ -180,6 +190,7 @@ public class Program
             Log.Information("Operation: {Operation}", operation);
             Log.Information("Mode: {Mode}", mode);
             Log.Information("Algorithm: {Algorithm}", algorithm);
+            Log.Information("Compression Format: {CompressionFormat}", compressionFormat);
             if (mode == RandomizationMode.TypeBased && operation == OperationMode.Process)
             {
                 Log.Information("Pokemon Data Path: {DataPath}", pokemonDataPath);
@@ -195,6 +206,7 @@ public class Program
                 Operation = operation,
                 Mode = mode,
                 Algorithm = algorithm,
+                CompressionFormat = compressionFormat,
                 PokemonDataPath = pokemonDataPath,
                 TexturesPath = texturesPath
             };

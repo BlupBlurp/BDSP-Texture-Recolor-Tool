@@ -54,6 +54,28 @@ public enum ColorAlgorithm
 }
 
 /// <summary>
+/// Texture compression format selection for reinsertion
+/// </summary>
+public enum TextureCompressionFormat
+{
+    /// <summary>
+    /// Uncompressed RGBA32 format (default, compatible with all textures)
+    /// Fast processing but large file sizes (~5x larger than compressed)
+    /// </summary>
+    RGBA32,
+
+    /// <summary>
+    /// BC7 compression format (high quality, good for most textures)
+    /// Slower processing but excellent quality/size ratio for color textures
+    /// </summary>
+    BC7
+
+    // Future formats can be added here:
+    // BC1, BC3, BC4, BC5, BC6H, ETC2, ASTC, etc.
+    // Each format should be implemented in TextureCompressionService
+}
+
+/// <summary>
 /// Configuration options for the BDSP texture randomizer
 /// </summary>
 public class RandomizerOptions
@@ -102,6 +124,11 @@ public class RandomizerOptions
     /// Color algorithm for type-based mode: HueShift or ColorReplacement
     /// </summary>
     public ColorAlgorithm Algorithm { get; set; } = ColorAlgorithm.ColorReplacement;
+
+    /// <summary>
+    /// Texture compression format for reinsertion: RGBA32 or BC7
+    /// </summary>
+    public TextureCompressionFormat CompressionFormat { get; set; } = TextureCompressionFormat.RGBA32;
 
     /// <summary>
     /// Path to PersonalTable.json file for type-based coloring

@@ -9,9 +9,9 @@
     <AssemblyTitle>BDSP Texture Recolor Tool</AssemblyTitle>
     <Description>A C# tool for randomizing Pokemon BDSP texture colors with advanced type-based color replacement</Description>
     <Copyright>Copyright © 2025 Blup</Copyright>
-    <Version>1.1.0</Version>
-    <AssemblyVersion>1.1.0</AssemblyVersion>
-    <FileVersion>1.1.0</FileVersion>
+    <Version>1.2.0</Version>
+    <AssemblyVersion>1.2.0</AssemblyVersion>
+    <FileVersion>1.2.0</FileVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
@@ -49,6 +49,10 @@
     
     <!-- Progress Reporting -->
     <PackageReference Include="ShellProgressBar" Version="5.2.0" />
+    
+    <!-- Texture Compression -->
+    <PackageReference Include="BCnEncoder.Net" Version="2.2.1" />
+    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.0" />
   </ItemGroup>
 
   <ItemGroup>

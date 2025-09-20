@@ -16,11 +16,13 @@ public class TextureImportService : IDisposable
 {
     private readonly ILogger _logger;
     private readonly AssetsManager _assetsManager;
+    private readonly TextureCompressionService _compressionService;
     private bool _disposed = false;
 
-    public TextureImportService(AssetsManager assetsManager)
+    public TextureImportService(AssetsManager assetsManager, TextureCompressionService compressionService)
     {
         _assetsManager = assetsManager ?? throw new ArgumentNullException(nameof(assetsManager));
+        _compressionService = compressionService ?? throw new ArgumentNullException(nameof(compressionService));
         _logger = Log.ForContext<TextureImportService>();
     }
 
@@ -30,8 +32,9 @@ public class TextureImportService : IDisposable
     /// <param name="originalBundlePath">Path to the original bundle file</param>
     /// <param name="texturesPath">Path to directory containing PNG textures and metadata</param>
     /// <param name="outputBundlePath">Path where the modified bundle will be saved</param>
+    /// <param name="compressionFormat">Target compression format for textures</param>
     /// <returns>Import result</returns>
-    public async Task<BundleImportResult> ImportBundleTexturesAsync(string originalBundlePath, string texturesPath, string outputBundlePath)
+    public async Task<BundleImportResult> ImportBundleTexturesAsync(string originalBundlePath, string texturesPath, string outputBundlePath, TextureCompressionFormat compressionFormat = TextureCompressionFormat.RGBA32)
     {
         var bundleName = Path.GetFileNameWithoutExtension(originalBundlePath);
         var result = new BundleImportResult { BundleName = bundleName };
@@ -98,7 +101,7 @@ public class TextureImportService : IDisposable
 
                     try
                     {
-                        if (await ApplyTextureModificationAsync(baseField, assetInfo, texturesPath, metadata, result))
+                        if (await ApplyTextureModificationAsync(baseField, assetInfo, texturesPath, metadata, result, compressionFormat))
                         {
                             result.TexturesModified++;
                             hasModifications = true;
@@ -185,7 +188,7 @@ public class TextureImportService : IDisposable
     /// <summary>
     /// Apply texture modification for a single texture
     /// </summary>
-    private async Task<bool> ApplyTextureModificationAsync(AssetTypeValueField baseField, AssetFileInfo assetInfo, string texturesPath, ExportMetadata metadata, BundleImportResult result)
+    private async Task<bool> ApplyTextureModificationAsync(AssetTypeValueField baseField, AssetFileInfo assetInfo, string texturesPath, ExportMetadata metadata, BundleImportResult result, TextureCompressionFormat compressionFormat)
     {
         try
         {
@@ -226,7 +229,7 @@ public class TextureImportService : IDisposable
             }
 
             // Convert image back to texture data
-            var textureData = ConvertImageToTextureData(image, exportedTexture.Format);
+            var textureData = ConvertImageToTextureData(image, exportedTexture.Format, compressionFormat);
             if (textureData == null)
             {
                 _logger.Error("Failed to convert PNG to texture data for {Name}", exportedTexture.OriginalName);
@@ -244,28 +247,26 @@ public class TextureImportService : IDisposable
                 streamDataField["path"].AsString = "";
             }
 
-            // Update format if it was converted (e.g., ASTC to RGBA32)
-            bool formatConverted = ShouldConvertFormat(exportedTexture.Format);
-            if (formatConverted)
+            // Update texture format to match the compressed format
+            var unityFormat = _compressionService.GetUnityTextureFormat(compressionFormat);
+            baseField["m_TextureFormat"].AsInt = unityFormat;
+
+            // Handle mip map structure based on compression format
+            var mipMapField = baseField["m_MipMap"];
+            if (!mipMapField.IsDummy)
             {
-                baseField["m_TextureFormat"].AsInt = (int)TextureFormat.RGBA32;
+                mipMapField.AsBool = false; // Disable mipmaps for now
+            }
 
-                // Handle mip map structure for format conversion
-                var mipMapField = baseField["m_MipMap"];
-                if (!mipMapField.IsDummy)
-                {
-                    mipMapField.AsBool = false;
-                }
+            // Set mip count to 1 (single level)
+            baseField["m_MipCount"].AsInt = 1;
 
-                // Set mip count to 1 (single level)
-                baseField["m_MipCount"].AsInt = 1;
-
-                // Update texture settings for uncompressed data
-                var isReadableField = baseField["m_IsReadable"];
-                if (!isReadableField.IsDummy)
-                {
-                    isReadableField.AsBool = true; // Make readable for RGBA32
-                }
+            // Update texture settings based on compression format
+            var isReadableField = baseField["m_IsReadable"];
+            if (!isReadableField.IsDummy)
+            {
+                // Compressed formats typically need to be readable for modification
+                isReadableField.AsBool = true;
             }
 
             // Update texture data
@@ -302,42 +303,19 @@ public class TextureImportService : IDisposable
     }
 
     /// <summary>
-    /// Convert an Image<Rgba32> to texture data bytes
+    /// Convert an Image<Rgba32> to texture data bytes using the specified compression format
     /// </summary>
-    private byte[]? ConvertImageToTextureData(Image<Rgba32> image, TextureFormat originalFormat)
+    private byte[]? ConvertImageToTextureData(Image<Rgba32> image, TextureFormat originalFormat, TextureCompressionFormat compressionFormat)
     {
         try
         {
-            // For now, convert everything to RGBA32 format for simplicity
-            // This ensures compatibility and avoids complex format-specific encoding
-            var targetFormat = ShouldConvertFormat(originalFormat) ? TextureFormat.RGBA32 : originalFormat;
+            // Use the compression service to compress the texture
+            var compressedData = _compressionService.CompressTexture(image, compressionFormat);
 
-            if (targetFormat == TextureFormat.RGBA32)
-            {
-                var data = new byte[image.Width * image.Height * 4];
-                var index = 0;
+            _logger.Debug("Converted texture to {Format}: {Width}x{Height}, {Size} bytes",
+                compressionFormat, image.Width, image.Height, compressedData.Length);
 
-                for (int y = 0; y < image.Height; y++)
-                {
-                    for (int x = 0; x < image.Width; x++)
-                    {
-                        var pixel = image[x, y];
-                        data[index++] = pixel.R;
-                        data[index++] = pixel.G;
-                        data[index++] = pixel.B;
-                        data[index++] = pixel.A;
-                    }
-                }
-
-                return data;
-            }
-            else
-            {
-                // For other formats, we would need format-specific encoding
-                // This is a complex task that requires specialized texture compression libraries
-                _logger.Warning("Advanced format encoding not implemented for {Format}, using RGBA32", originalFormat);
-                return ConvertImageToTextureData(image, TextureFormat.RGBA32);
-            }
+            return compressedData;
         }
         catch (Exception ex)
         {

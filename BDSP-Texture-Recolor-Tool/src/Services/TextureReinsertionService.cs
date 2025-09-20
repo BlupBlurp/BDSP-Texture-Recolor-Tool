@@ -1,8 +1,11 @@
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 using AssetsTools.NET.Texture;
+using BDSP.TextureRecolorTool.Models;
 using BDSP.TextureRecolorTool.Services;
 using Serilog;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace BDSP.TextureRecolorTool.Services;
 
@@ -13,10 +16,12 @@ public class TextureReinsertionService
 {
     private readonly ILogger _logger;
     private readonly AssetsManager _assetsManager;
+    private readonly TextureCompressionService _compressionService;
 
-    public TextureReinsertionService(AssetsManager assetsManager)
+    public TextureReinsertionService(AssetsManager assetsManager, TextureCompressionService compressionService)
     {
         _assetsManager = assetsManager ?? throw new ArgumentNullException(nameof(assetsManager));
+        _compressionService = compressionService ?? throw new ArgumentNullException(nameof(compressionService));
         _logger = Log.ForContext<TextureReinsertionService>();
     }
 
@@ -26,11 +31,13 @@ public class TextureReinsertionService
     /// <param name="bundleFile">Original bundle file</param>
     /// <param name="modifiedTextures">Modified texture data</param>
     /// <param name="outputPath">Path to save the modified bundle</param>
+    /// <param name="compressionFormat">Target compression format for textures</param>
     /// <returns>Number of textures successfully reinserted</returns>
     public async Task<int> ReinsertTexturesAsync(
         BundleFileInstance bundleFile,
         Dictionary<string, ModifiedTexture> modifiedTextures,
-        string outputPath)
+        string outputPath,
+        TextureCompressionFormat compressionFormat = TextureCompressionFormat.RGBA32)
     {
         if (bundleFile?.file == null)
         {
@@ -63,7 +70,7 @@ public class TextureReinsertionService
                 try
                 {
                     // Create bundle replacer for this assets file
-                    var success = CreateBundleReplacer(fileInst, texturesInFile);
+                    var success = CreateBundleReplacer(fileInst, texturesInFile, compressionFormat);
                     if (success)
                     {
                         reinsertedCount += texturesInFile.Count;
@@ -106,7 +113,7 @@ public class TextureReinsertionService
     /// <summary>
     /// Create an AssetFileInfo replacer for a modified texture
     /// </summary>
-    private bool CreateAssetReplacer(ModifiedTexture modifiedTexture)
+    private bool CreateAssetReplacer(ModifiedTexture modifiedTexture, TextureCompressionFormat compressionFormat)
     {
         try
         {
@@ -122,77 +129,107 @@ public class TextureReinsertionService
                 streamDataField["path"].AsString = "";
             }
 
-            // Check if we need to convert format - we convert compressed formats to RGBA32 
-            // since we don't use external encoders for recompression
+            // Handle texture data compression/format conversion
+            byte[] finalTextureData;
             var actualSize = modifiedTexture.ModifiedData.Length;
             var expectedRGBA32Size = modifiedTexture.Width * modifiedTexture.Height * 4;
 
-            bool isFormatConverted = false;
-            if (IsCompressedFormat(modifiedTexture.OriginalFormat) && actualSize == expectedRGBA32Size)
+            // Check if the modified data is in RGBA32 format (uncompressed)
+            bool isRGBA32Data = actualSize == expectedRGBA32Size;
+
+            if (isRGBA32Data && compressionFormat != TextureCompressionFormat.RGBA32)
             {
-                // Converting compressed format to RGBA32 since we don't use external encoders
-                _logger.Debug("Converting texture format from {OriginalFormat} to RGBA32 for: {TextureName}",
-                    modifiedTexture.OriginalFormat, modifiedTexture.Name);
+                // We have RGBA32 data but want to compress it
+                _logger.Debug("Compressing texture data from RGBA32 to {CompressionFormat} for: {TextureName}",
+                    compressionFormat, modifiedTexture.Name);
 
-                // STEP 1: Change format first
-                baseField["m_TextureFormat"].AsInt = 4; // TextureFormat.RGBA32
-                isFormatConverted = true;
+                // Convert byte array back to Image<Rgba32> for compression
+                using var image = SixLabors.ImageSharp.Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
+                    modifiedTexture.ModifiedData, (int)modifiedTexture.Width, (int)modifiedTexture.Height);
+
+                finalTextureData = _compressionService.CompressTexture(image, compressionFormat);
+
+                // Update texture format
+                var unityFormat = _compressionService.GetUnityTextureFormat(compressionFormat);
+                baseField["m_TextureFormat"].AsInt = unityFormat;
+
+                _logger.Debug("Compressed texture: {OriginalSize} bytes -> {CompressedSize} bytes",
+                    actualSize, finalTextureData.Length);
             }
-            else if (!IsCompressedFormat(modifiedTexture.OriginalFormat))
+            else if (IsCompressedFormat(modifiedTexture.OriginalFormat) && isRGBA32Data)
             {
-                // Keep original format for uncompressed textures when possible
-                _logger.Debug("Attempting to preserve original texture format {OriginalFormat} for: {TextureName}",
-                    modifiedTexture.OriginalFormat, modifiedTexture.Name);
-            }
+                // Original was compressed but modified data is RGBA32, use target compression format
+                _logger.Debug("Converting texture format from {OriginalFormat} to {CompressionFormat} for: {TextureName}",
+                    modifiedTexture.OriginalFormat, compressionFormat, modifiedTexture.Name);
 
-            // STEP 2: Handle mip map structure for format conversion
-            if (isFormatConverted)
+                if (compressionFormat == TextureCompressionFormat.RGBA32)
+                {
+                    // Keep as RGBA32
+                    finalTextureData = modifiedTexture.ModifiedData;
+                    baseField["m_TextureFormat"].AsInt = _compressionService.GetUnityTextureFormat(TextureCompressionFormat.RGBA32);
+                }
+                else
+                {
+                    // Compress to target format
+                    using var image = SixLabors.ImageSharp.Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Rgba32>(
+                        modifiedTexture.ModifiedData, (int)modifiedTexture.Width, (int)modifiedTexture.Height);
+
+                    finalTextureData = _compressionService.CompressTexture(image, compressionFormat);
+                    var unityFormat = _compressionService.GetUnityTextureFormat(compressionFormat);
+                    baseField["m_TextureFormat"].AsInt = unityFormat;
+                }
+            }
+            else
             {
-                // When converting to RGBA32, we need to properly handle mip maps
-                _logger.Debug("Updating mip map structure for format conversion: {TextureName}", modifiedTexture.Name);
-
-                // Disable mip maps for RGBA32 conversion
-                var mipMapField = baseField["m_MipMap"];
-                if (!mipMapField.IsDummy)
-                {
-                    mipMapField.AsBool = false;
-                }
-
-                // Set mip count to 1 (single level)
-                var mipCountField = baseField["m_MipCount"];
-                if (!mipCountField.IsDummy)
-                {
-                    mipCountField.AsInt = 1;
-                }
-
-                // Update texture settings for uncompressed data
-                var isReadableField = baseField["m_IsReadable"];
-                if (!isReadableField.IsDummy)
-                {
-                    isReadableField.AsBool = true; // Make readable for RGBA32
-                }
-
-                _logger.Debug("Updated mip map settings: MipMap=false, MipCount=1, IsReadable=true");
+                // Keep original data and format
+                finalTextureData = modifiedTexture.ModifiedData;
+                _logger.Debug("Preserving original texture format and data for: {TextureName}",
+                    modifiedTexture.Name);
             }
 
-            // STEP 3: Set the new image data AFTER format conversion
+            // Handle mip map structure based on compression format
+            var compressionFormatIsCompressed = _compressionService.IsCompressedFormat(compressionFormat);
+
+            var mipMapField = baseField["m_MipMap"];
+            if (!mipMapField.IsDummy)
+            {
+                mipMapField.AsBool = false; // Disable mipmaps for consistency
+            }
+
+            // Set mip count to 1 (single level)
+            var mipCountField = baseField["m_MipCount"];
+            if (!mipCountField.IsDummy)
+            {
+                mipCountField.AsInt = 1;
+            }
+
+            // Update texture settings based on compression format
+            var isReadableField = baseField["m_IsReadable"];
+            if (!isReadableField.IsDummy)
+            {
+                isReadableField.AsBool = true; // Make readable for modifications
+            }
+
+            _logger.Debug("Updated texture settings for {CompressionFormat}: MipMap=false, MipCount=1, IsReadable=true", compressionFormat);
+
+            // STEP 3: Set the new image data
             var imageDataField = baseField["image data"];
             if (!imageDataField.IsDummy)
             {
-                imageDataField.AsByteArray = modifiedTexture.ModifiedData;
+                imageDataField.AsByteArray = finalTextureData;
                 _logger.Debug("Set new image data: {Size} bytes for {TextureName}",
-                    modifiedTexture.ModifiedData.Length, modifiedTexture.Name);
+                    finalTextureData.Length, modifiedTexture.Name);
             }
 
             // STEP 4: Update size fields to match new data
-            baseField["m_CompleteImageSize"].AsInt = modifiedTexture.ModifiedData.Length;
+            baseField["m_CompleteImageSize"].AsInt = finalTextureData.Length;
             baseField["m_ImageCount"].AsInt = 1;
 
             // Additional size field that might exist
             var dataSizeField = baseField["m_DataSize"];
             if (!dataSizeField.IsDummy)
             {
-                dataSizeField.AsInt = modifiedTexture.ModifiedData.Length;
+                dataSizeField.AsInt = finalTextureData.Length;
             }
 
             // Convert the field back to bytes and set as replacer
@@ -213,14 +250,15 @@ public class TextureReinsertionService
     /// </summary>
     private bool CreateBundleReplacer(
         AssetsFileInstance fileInst,
-        List<ModifiedTexture> modifiedTextures)
+        List<ModifiedTexture> modifiedTextures,
+        TextureCompressionFormat compressionFormat)
     {
         try
         {
             // Apply all asset replacers to the assets file
             foreach (var modifiedTexture in modifiedTextures)
             {
-                CreateAssetReplacer(modifiedTexture);
+                CreateAssetReplacer(modifiedTexture, compressionFormat);
             }
 
             // Find the corresponding directory info in the bundle

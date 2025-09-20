@@ -58,6 +58,7 @@ Run the program from the command line using `BDSP-Texture-Recolor-Tool.exe` with
 - `-s, --seed`: Random seed for reproducible results
 - `--mode`: Choose "TypeBased" for type-based recoloring or "Random" for random colors (Default: TypeBased)
 - `--algorithm`: Choose "ColorReplacement" or "HueShift" (Default: ColorReplacement)
+- `-f, --compression-format`: Texture compression format: "RGBA32" (fast, large files) or "BC7" (slower, smaller files) (Default: RGBA32)
 - `-d, --data-path`: Path to PersonalTable.json file (required for TypeBased mode)
 - `--textures-path`: Path to directory containing PNG textures (for Import operations)
 - `-v, --verbose`: Enable detailed console output
@@ -74,6 +75,12 @@ Run the program from the command line using `BDSP-Texture-Recolor-Tool.exe` with
 
 ```bash
 BDSP-Texture-Recolor-Tool.exe -i "PokemonBundles" -o "OutputBundles" --mode TypeBased --algorithm ColorReplacement -d "PokemonData/PersonalTable.json" --verbose
+```
+
+**Type-based recoloring with BC7 compression (smaller files, slower processing):**
+
+```bash
+BDSP-Texture-Recolor-Tool.exe -i "PokemonBundles" -o "OutputBundles" --mode TypeBased --algorithm ColorReplacement -d "PokemonData/PersonalTable.json" -f BC7 --verbose
 ```
 
 **Type-based recoloring with Hue Shift:**
@@ -94,11 +101,27 @@ BDSP-Texture-Recolor-Tool.exe -i "PokemonBundles" -o "OutputBundles" --mode Rand
 BDSP-Texture-Recolor-Tool.exe -i "PokemonBundles" -o "ExportedTextures" --operation Export --verbose
 ```
 
-**Import manually edited PNG textures back to bundles:**
+**Import manually edited PNG textures back to bundles (with BC7 compression):**
 
 ```bash
-BDSP-Texture-Recolor-Tool.exe -i "PokemonBundles" -o "OutputBundles" --operation Import --textures-path "EditedTextures" --verbose
+BDSP-Texture-Recolor-Tool.exe -i "PokemonBundles" -o "OutputBundles" --operation Import --textures-path "EditedTextures" -f BC7 --verbose
 ```
+
+## Texture Compression Formats
+
+The tool supports two texture compression formats that affect file size and processing time:
+
+### RGBA32 (Default)
+
+- **Pros:** Very fast processing (~2-3 seconds per bundle)
+- **Cons:** Large file sizes
+- **File size:** ~3.39GB for all Pokémon bundles (vs. original 629MB)
+
+### BC7 (High Quality Compression)
+
+- **Pros:** Smaller than RGBA32
+- **Cons:** Significantly longer processing time
+- **File size:** ~1.48GB for all Pokémon bundles (vs. original 629MB)
 
 ## Installation of Recolored Bundles
 
@@ -109,7 +132,7 @@ BDSP-Texture-Recolor-Tool.exe -i "PokemonBundles" -o "OutputBundles" --operation
 
 - **Eye texture preservation:** Some Pokémon with white or gray body tones may have their eye colors affected. Planning to improve this by comparing normal and shiny eye textures to better preserve natural eye colors
 - **Color representation accuracy:** Some type-based colors (particularly lighter types like Steel) may not be perfectly represented. Working on improving the color replacement algorithm
-- **More customization:** I would like to add new arguments for the command for extra customization. For example, being able to choose the colors that represent each type. Or the compression format for the textures (files are currently very heavy using RGBA32)
+- **More customization:** I would like to add new arguments for the command for extra customization. For example, being able to choose the colors that represent each type
 - **Easier use:** The tool could directly ask for the path of the BDSP dump and mod folder, and automatically get all the necessary bundles and files, without the user having to manually copy and replace them
 - **Clean up:** It should be possible to move the functionality of this tool to a script, so that it's not needed to have an exe with a lot of dependencies (and multiplatform support?). I originally tried to make this tool as a Python script using UnityPy, but I got stuck and I started all over in C# (I'm just inexperienced, there surely are better ways of doing this.)
 

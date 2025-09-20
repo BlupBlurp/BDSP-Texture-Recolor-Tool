@@ -17,6 +17,7 @@ public class BDSPTextureRandomizer : IDisposable
     private readonly ColorRandomizationService _colorService;
     private readonly TextureExtractionService _extractionService;
     private readonly TextureReinsertionService _reinsertionService;
+    private readonly TextureCompressionService _compressionService;
     private readonly PokemonDataService? _pokemonDataService;
     private readonly TypeColorMappingService? _typeColorService;
     private readonly ColorAnalysisService? _colorAnalysisService;
@@ -80,7 +81,8 @@ public class BDSPTextureRandomizer : IDisposable
 
         _assetsManager = new AssetsManager();
         _extractionService = new TextureExtractionService(_assetsManager);
-        _reinsertionService = new TextureReinsertionService(_assetsManager);
+        _compressionService = new TextureCompressionService();
+        _reinsertionService = new TextureReinsertionService(_assetsManager, _compressionService);
 
         // Initialize export/import services based on operation mode
         if (_options.Operation == OperationMode.Export)
@@ -90,7 +92,7 @@ public class BDSPTextureRandomizer : IDisposable
         }
         else if (_options.Operation == OperationMode.Import)
         {
-            _importService = new TextureImportService(_assetsManager);
+            _importService = new TextureImportService(_assetsManager, _compressionService);
             _logger.Information("Initialized texture import service");
         }
 
@@ -291,7 +293,7 @@ public class BDSPTextureRandomizer : IDisposable
                     }
 
                     var importResult = await _importService.ImportBundleTexturesAsync(
-                        originalBundlePath, texturesPath, outputBundlePath);
+                        originalBundlePath, texturesPath, outputBundlePath, _options.CompressionFormat);
 
                     if (importResult.Success)
                     {
@@ -502,7 +504,7 @@ public class BDSPTextureRandomizer : IDisposable
             // Reinsert modified textures
             var outputPath = GetOutputPath(bundlePath);
             var reinsertedCount = await _reinsertionService.ReinsertTexturesAsync(
-                bundleFile, modifiedTextures, outputPath);
+                bundleFile, modifiedTextures, outputPath, _options.CompressionFormat);
 
             result.TexturesModified = reinsertedCount;
             result.Success = reinsertedCount > 0;
