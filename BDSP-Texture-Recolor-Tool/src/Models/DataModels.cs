@@ -1,4 +1,4 @@
-namespace BDSP.CSharp.Randomizer.Models;
+namespace BDSP.TextureRecolorTool.Models;
 
 /// <summary>
 /// Color transformation parameters that remain consistent across all textures in a bundle

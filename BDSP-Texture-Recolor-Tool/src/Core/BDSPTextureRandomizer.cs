@@ -1,11 +1,11 @@
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
-using BDSP.CSharp.Randomizer.Models;
-using BDSP.CSharp.Randomizer.Services;
+using BDSP.TextureRecolorTool.Models;
+using BDSP.TextureRecolorTool.Services;
 using Serilog;
 using ShellProgressBar;
 
-namespace BDSP.CSharp.Randomizer.Core;
+namespace BDSP.TextureRecolorTool.Core;
 
 /// <summary>
 /// Main randomizer class that orchestrates the entire texture randomization process

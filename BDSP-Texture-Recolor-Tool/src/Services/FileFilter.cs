@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace BDSP.CSharp.Randomizer.Services;
+namespace BDSP.TextureRecolorTool.Services;
 
 /// <summary>
 /// Service for filtering and discovering Pokemon bundle files

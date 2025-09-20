@@ -1,6 +1,6 @@
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace BDSP.CSharp.Randomizer.Models;
+namespace BDSP.TextureRecolorTool.Models;
 
 /// <summary>
 /// Comprehensive color palette for a Pokemon type with multiple color categories

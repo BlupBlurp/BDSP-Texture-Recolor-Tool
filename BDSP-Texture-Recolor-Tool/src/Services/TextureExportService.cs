@@ -3,11 +3,11 @@ using AssetsTools.NET.Extra;
 using AssetsTools.NET.Texture;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using BDSP.CSharp.Randomizer.Models;
+using BDSP.TextureRecolorTool.Models;
 using Serilog;
 using System.Text.Json;
 
-namespace BDSP.CSharp.Randomizer.Services;
+namespace BDSP.TextureRecolorTool.Services;
 
 /// <summary>
 /// Service for exporting textures from Unity Asset Bundles to PNG files

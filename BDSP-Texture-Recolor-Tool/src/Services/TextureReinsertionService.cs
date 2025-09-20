@@ -1,10 +1,10 @@
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 using AssetsTools.NET.Texture;
-using BDSP.CSharp.Randomizer.Services;
+using BDSP.TextureRecolorTool.Services;
 using Serilog;
 
-namespace BDSP.CSharp.Randomizer.Services;
+namespace BDSP.TextureRecolorTool.Services;
 
 /// <summary>
 /// Service for reinserting modified textures back into Unity Asset Bundles

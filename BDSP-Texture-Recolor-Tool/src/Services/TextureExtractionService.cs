@@ -3,10 +3,10 @@ using AssetsTools.NET.Extra;
 using AssetsTools.NET.Texture;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using BDSP.CSharp.Randomizer.Models;
+using BDSP.TextureRecolorTool.Models;
 using Serilog;
 
-namespace BDSP.CSharp.Randomizer.Services;
+namespace BDSP.TextureRecolorTool.Services;
 
 /// <summary>
 /// Service for extracting and manipulating textures from Unity Asset Bundles
@@ -72,13 +72,17 @@ public class TextureExtractionService : IDisposable
             // Get all asset files in the bundle
             var assetFiles = bundleFile.file.BlockAndDirInfo.DirectoryInfos;
 
-            foreach (var dirInfo in assetFiles)
+            // Use Task.Run for CPU-bound texture processing work
+            await Task.Run(() =>
             {
-                var assetFile = _assetsManager.LoadAssetsFileFromBundle(bundleFile, dirInfo.Name);
-                if (assetFile == null) continue;
+                foreach (var dirInfo in assetFiles)
+                {
+                    var assetFile = _assetsManager.LoadAssetsFileFromBundle(bundleFile, dirInfo.Name);
+                    if (assetFile == null) continue;
 
-                await ProcessAssetsFileAsync(assetFile, colorParams, modifiedTextures);
-            }
+                    ProcessAssetsFile(assetFile, colorParams, modifiedTextures);
+                }
+            });
 
             _logger.Information("Extracted and processed {Count} textures from bundle", modifiedTextures.Count);
             return modifiedTextures;
@@ -93,7 +97,7 @@ public class TextureExtractionService : IDisposable
     /// <summary>
     /// Process textures in a single assets file
     /// </summary>
-    private async Task ProcessAssetsFileAsync(
+    private void ProcessAssetsFile(
         AssetsFileInstance fileInst,
         BundleColorParameters colorParams,
         Dictionary<string, ModifiedTexture> modifiedTextures)
@@ -107,7 +111,7 @@ public class TextureExtractionService : IDisposable
             {
                 try
                 {
-                    await ProcessSingleTextureAsync(fileInst, asset, colorParams, modifiedTextures);
+                    ProcessSingleTexture(fileInst, asset, colorParams, modifiedTextures);
                 }
                 catch (Exception ex)
                 {
@@ -125,7 +129,7 @@ public class TextureExtractionService : IDisposable
     /// <summary>
     /// Process a single texture asset
     /// </summary>
-    private async Task ProcessSingleTextureAsync(
+    private void ProcessSingleTexture(
         AssetsFileInstance fileInst,
         AssetFileInfo assetInfo,
         BundleColorParameters colorParams,

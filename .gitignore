@@ -3,11 +3,12 @@
 OutputBundles/
 OutputTextures/
 Release-Final/
+Release-Debug/
 PokemonBundles/
 PokemonBundlesTest/
 PokemonData/
-BDSP-CSharp-Randomizer/bin/
-BDSP-CSharp-Randomizer/tests/
+BDSP-Texture-Recolor-Tool/bin/
+BDSP-Texture-Recolor-Tool/tests/
 UABEA/
 Tests/
 .github/

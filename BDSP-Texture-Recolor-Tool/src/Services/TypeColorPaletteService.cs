@@ -1,7 +1,7 @@
-using BDSP.CSharp.Randomizer.Models;
+using BDSP.TextureRecolorTool.Models;
 using Serilog;
 
-namespace BDSP.CSharp.Randomizer.Services;
+namespace BDSP.TextureRecolorTool.Services;
 
 /// <summary>
 /// Service providing comprehensive color palettes for each Pokemon type with multiple color categories

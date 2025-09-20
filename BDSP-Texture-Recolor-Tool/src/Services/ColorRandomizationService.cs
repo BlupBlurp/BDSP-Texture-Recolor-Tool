@@ -1,10 +1,10 @@
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using BDSP.CSharp.Randomizer.Models;
+using BDSP.TextureRecolorTool.Models;
 using Serilog;
 
-namespace BDSP.CSharp.Randomizer.Services;
+namespace BDSP.TextureRecolorTool.Services;
 
 /// <summary>
 /// Service for applying color randomization to textures using HSV color space manipulation

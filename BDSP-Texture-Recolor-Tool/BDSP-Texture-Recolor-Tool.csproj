@@ -3,14 +3,15 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>BDSP.CSharp.Randomizer</RootNamespace>
+    <RootNamespace>BDSP.TextureRecolorTool</RootNamespace>
     <AssemblyName>BDSP-Texture-Recolor-Tool</AssemblyName>
     <Product>BDSP Texture Recolor Tool</Product>
     <AssemblyTitle>BDSP Texture Recolor Tool</AssemblyTitle>
     <Description>A C# tool for randomizing Pokemon BDSP texture colors with advanced type-based color replacement</Description>
-    <Copyright>Copyright © 2025</Copyright>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.0</FileVersion>
+    <Copyright>Copyright © 2025 Blup</Copyright>
+    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.0</AssemblyVersion>
+    <FileVersion>1.1.0</FileVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
@@ -33,7 +34,7 @@
     <PackageReference Include="AssetsTools.NET.Texture" Version="1.0.0" />
     
     <!-- Image Processing for Texture Manipulation -->
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
     
     <!-- Logging Framework -->
     <PackageReference Include="Serilog" Version="4.0.1" />

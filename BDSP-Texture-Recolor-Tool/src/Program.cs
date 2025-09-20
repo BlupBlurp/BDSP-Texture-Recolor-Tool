@@ -1,9 +1,9 @@
-using BDSP.CSharp.Randomizer.Core;
-using BDSP.CSharp.Randomizer.Models;
+using BDSP.TextureRecolorTool.Core;
+using BDSP.TextureRecolorTool.Models;
 using CommandLine;
 using Serilog;
 
-namespace BDSP.CSharp.Randomizer;
+namespace BDSP.TextureRecolorTool;
 
 /// <summary>
 /// Main program entry point for the BDSP Texture Recolor Tool

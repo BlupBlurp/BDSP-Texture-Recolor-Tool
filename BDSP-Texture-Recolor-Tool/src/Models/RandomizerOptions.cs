@@ -1,4 +1,4 @@
-namespace BDSP.CSharp.Randomizer.Models;
+namespace BDSP.TextureRecolorTool.Models;
 
 /// <summary>
 /// Operation mode selection

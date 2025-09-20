@@ -1,8 +1,8 @@
 using System.Text.Json;
-using BDSP.CSharp.Randomizer.Models;
+using BDSP.TextureRecolorTool.Models;
 using Serilog;
 
-namespace BDSP.CSharp.Randomizer.Services;
+namespace BDSP.TextureRecolorTool.Services;
 
 /// <summary>
 /// Service for loading and querying Pokemon data from PersonalTable.json

@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace BDSP.CSharp.Randomizer.Models;
+namespace BDSP.TextureRecolorTool.Models;
 
 /// <summary>
 /// Pokemon data entry from PersonalTable.json
