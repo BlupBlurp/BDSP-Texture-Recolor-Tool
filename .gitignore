@@ -1,0 +1,506 @@
+# Project-specific directoriesOutputBundles/
+
+OutputBundles/
+OutputTextures/
+Release-Final/
+PokemonBundles/
+PokemonBundlesTest/
+PokemonData/
+BDSP-CSharp-Randomizer/bin/
+BDSP-CSharp-Randomizer/tests/
+UABEA/
+Tests/
+.github/
+
+logs/
+
+*.log# Byte-compiled / optimized / DLL files
+
+__pycache__/
+
+# .NET Build outputs*.py[codz]
+
+bin/*$py.class
+
+obj/
+
+out/# C extensions
+
+*.so
+
+# Visual Studio / VS Code
+
+.vs/# Distribution / packaging
+
+.vscode/.Python
+
+*.userbuild/
+
+*.userosscachedevelop-eggs/
+
+*.sln.docstatesdist/
+
+downloads/
+
+# Build resultseggs/
+
+[Dd]ebug/.eggs/
+
+[Dd]ebugPublic/lib/
+
+[Rr]elease/lib64/
+
+[Rr]eleases/parts/
+
+x64/sdist/
+
+x86/var/
+
+[Ww][Ii][Nn]32/wheels/
+
+[Aa][Rr][Mm]/share/python-wheels/
+
+[Aa][Rr][Mm]64/*.egg-info/
+
+bld/.installed.cfg
+
+[Bb]in/*.egg
+
+[Oo]bj/MANIFEST
+
+[Ll]og/
+
+[Ll]ogs/# PyInstaller
+
+#  Usually these files are written by a python script from a template
+
+# .NET Core#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+
+project.lock.json*.manifest
+
+project.fragment.lock.json*.spec
+
+artifacts/
+
+# Installer logs
+
+# NuGetpip-log.txt
+
+*.nupkgpip-delete-this-directory.txt
+
+*.snupkg
+
+.nuget/# Unit test / coverage reports
+
+packages/htmlcov/
+
+!packages/build/.tox/
+
+!packages/repositories.config.nox/
+
+!packages.config.coverage
+
+.coverage.*
+
+# Visual Studio cache files.cache
+
+*.suonosetests.xml
+
+*.usercoverage.xml
+
+*.userosscache*.cover
+
+*.sln.docstates*.py.cover
+
+.hypothesis/
+
+# Visual Studio profiler.pytest_cache/
+
+*.psesscover/
+
+*.vsp
+
+*.vspx# Translations
+
+*.sap*.mo
+
+*.pot
+
+# TFS 2012 Local Workspace
+
+$tf/# Django stuff:
+
+*.log
+
+# Guidance Automation Toolkitlocal_settings.py
+
+*.gpStatedb.sqlite3
+
+db.sqlite3-journal
+
+# ReSharper
+
+_ReSharper*/# Flask stuff:
+
+*.[Rr]e[Ss]harperinstance/
+
+*.DotSettings.user.webassets-cache
+
+
+
+# TeamCity# Scrapy stuff:
+
+_TeamCity*.scrapy
+
+
+
+# DotCover# Sphinx documentation
+
+*.dotCoverdocs/_build/
+
+
+
+# AxoCover# PyBuilder
+
+.axoCover/*.pybuilder/
+
+!.axoCover/settings.jsontarget/
+
+
+
+# Coverlet# Jupyter Notebook
+
+coverage*.json.ipynb_checkpoints
+
+coverage*.xml
+
+coverage*.info# IPython
+
+profile_default/
+
+# Visual Studio code coverage resultsipython_config.py
+
+*.coverage
+
+*.coveragexml# pyenv
+
+#   For a library or package, you might want to ignore these files since the code is
+
+# NCrunch#   intended to run in multiple environments; otherwise, check them in:
+
+_NCrunch_*# .python-version
+
+.*crunch*.local.xml
+
+nCrunchTemp_*# pipenv
+
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+
+# MightyMoose#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+
+*.mm.*#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+
+AutoTest.Net/#   install all needed dependencies.
+
+#Pipfile.lock
+
+# Web workbench (sass)
+
+.sass-cache/# UV
+
+#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
+
+# Installshield output folder#   This is especially recommended for binary packages to ensure reproducibility, and is more
+
+[Ee]xpress/#   commonly ignored for libraries.
+
+#uv.lock
+
+# DocProject
+
+DocProject/buildhelp/# poetry
+
+DocProject/Help/*.HxT#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
+
+DocProject/Help/*.HxC#   This is especially recommended for binary packages to ensure reproducibility, and is more
+
+DocProject/Help/*.hhc#   commonly ignored for libraries.
+
+DocProject/Help/*.hhk#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
+
+DocProject/Help/*.hhp#poetry.lock
+
+DocProject/Help/Html2#poetry.toml
+
+DocProject/Help/html
+
+# pdm
+
+# Click-Once directory#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
+
+publish/#   pdm recommends including project-wide configuration in pdm.toml, but excluding .pdm-python.
+
+#   https://pdm-project.org/en/latest/usage/project/#working-with-version-control
+
+# Publish Web Output#pdm.lock
+
+*.[Pp]ublish.xml#pdm.toml
+
+*.azurePubxml.pdm-python
+
+*.pubxml.pdm-build/
+
+*.publishproj
+
+# pixi
+
+# Microsoft Azure Web App publish settings#   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
+
+PublishScripts/#pixi.lock
+
+#   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
+
+# NuGet Packages#   in the .venv directory. It is recommended not to include this directory in version control.
+
+*.nupkg.pixi
+
+*.snupkg
+
+**/[Pp]ackages/*# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+
+!**/[Pp]ackages/build/__pypackages__/
+
+!**/[Pp]ackages/repositories.config
+
+# Celery stuff
+
+# Microsoft Azure Build Outputcelerybeat-schedule
+
+csx/celerybeat.pid
+
+*.build.csdef
+
+# SageMath parsed files
+
+# Microsoft Azure Emulator*.sage.py
+
+ecf/
+
+rcf/# Environments
+
+.env
+
+# Windows Store app package directories and files.envrc
+
+AppPackages/.venv
+
+BundleArtifacts/env/
+
+Package.StoreAssociation.xmlvenv/
+
+_pkginfo.txtENV/
+
+*.appxenv.bak/
+
+*.appxbundlevenv.bak/
+
+*.appxupload
+
+# Spyder project settings
+
+# Visual Studio cache files.spyderproject
+
+*.cachefile.spyproject
+
+*.VC.db
+
+*.VC.VC.opendb# Rope project settings
+
+.ropeproject
+
+# Visual Studio Trace Files
+
+*.e2e# mkdocs documentation
+
+/site
+
+# Backup & report files from converting an old project file
+
+_UpgradeReport_Files/# mypy
+
+Backup*/.mypy_cache/
+
+UpgradeLog*.XML.dmypy.json
+
+UpgradeLog*.htmdmypy.json
+
+ServiceFabricBackup/
+
+*.rptproj.bak# Pyre type checker
+
+.pyre/
+
+# SQL Server files
+
+*.mdf# pytype static type analyzer
+
+*.ldf.pytype/
+
+*.ndf
+
+# Cython debug symbols
+
+# Business Intelligence projectscython_debug/
+
+*.rdl.data
+
+*.bim.layout# PyCharm
+
+*.bim_*.settings#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
+
+*.rptproj.rsuser#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
+
+*- [Bb]ackup.rdl#  and can be added to the global gitignore or merged into this file.  For a more nuclear
+
+*- [Bb]ackup ([0-9]).rdl#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
+
+*- [Bb]ackup ([0-9][0-9]).rdl#.idea/
+
+
+
+# Microsoft Fakes# Abstra
+
+FakesAssemblies/# Abstra is an AI-powered process automation framework.
+
+# Ignore directories containing user credentials, local state, and settings.
+
+# GhostDoc plugin setting file# Learn more at https://abstra.io/docs
+
+*.GhostDoc.xml.abstra/
+
+
+
+# Node.js Tools for Visual Studio# Visual Studio Code
+
+.ntvs_analysis.dat#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
+
+node_modules/#  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
+
+#  and can be added to the global gitignore or merged into this file. However, if you prefer, 
+
+# Visual Studio 6 build log#  you could uncomment the following to ignore the entire vscode folder
+
+*.plg# .vscode/
+
+
+
+# Visual Studio 6 workspace options file# Ruff stuff:
+
+*.opt.ruff_cache/
+
+
+
+# Visual Studio 6 auto-generated workspace file (contains which files were open etc.)# PyPI configuration file
+
+*.vbw.pypirc
+
+
+
+# Visual Studio LightSwitch build output# Cursor
+
+**/*.HTMLClient/GeneratedArtifacts#  Cursor is an AI-powered code editor. `.cursorignore` specifies files/directories to
+
+**/*.DesktopClient/GeneratedArtifacts#  exclude from AI features like autocomplete and code analysis. Recommended for sensitive data
+
+**/*.DesktopClient/ModelManifest.xml#  refer to https://docs.cursor.com/context/ignore-files
+
+**/*.Server/GeneratedArtifacts.cursorignore
+
+**/*.Server/ModelManifest.xml.cursorindexingignore
+
+_Pvt_Extensions
+
+# Marimo
+
+# Paket dependency managermarimo/_static/
+
+.paket/paket.exemarimo/_lsp/
+
+paket-files/__marimo__/
+
+
+# FAKE - F# Make
+.fake/
+
+# CodeRush personal settings
+.cr/personal
+
+# Python Tools for Visual Studio (PTVS)
+__pycache__/
+*.pyc
+
+# Cake - Uncomment if you are using it
+# tools/**
+# !tools/packages.config
+
+# Tabs Studio
+*.tss
+
+# Telerik's JustMock configuration file
+*.jmconfig
+
+# BizTalk build output
+*.btp.cs
+*.btm.cs
+*.odx.cs
+*.xsd.cs
+
+# OpenCover UI analysis results
+OpenCover/
+
+# Azure Stream Analytics local run output
+ASALocalRun/
+
+# MSBuild Binary and Structured Log
+*.binlog
+
+# NVidia Nsight GPU debugger configuration file
+*.nvuser
+
+# MFractors (Xamarin productivity tool) working folder
+.mfractor/
+
+# Local History for Visual Studio
+.localhistory/
+
+# BeatPulse healthcheck temp database
+healthchecksdb
+
+# Backup folder for Package Reference Convert tool in Visual Studio 2017
+MigrationBackup/
+
+# Ionide (cross platform F# VS Code tools) working folder
+.ionide/
+
+# Fody - auto-generated XML schema
+FodyWeavers.xsd
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor backup files
+*~
+.#*
+*.swp
+*.swo
+*.orig
+
+# Temporary files
+*.tmp
+*.temp
