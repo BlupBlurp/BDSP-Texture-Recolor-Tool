@@ -113,11 +113,24 @@ public class ColorPaletteConfigurationService
             _loadedPalettes = palettes;
             _logger.Information("Successfully loaded {Count} type color palettes from YAML configuration", palettes.Count);
 
-            // Log some details about what was loaded
-            foreach (var palette in palettes.Values.Take(3)) // Log first 3 as examples
+            // Log details about loaded palettes - all in debug mode, first 3 as examples in info mode
+            if (_logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
             {
-                _logger.Debug("Loaded palette for {Type} (Primary: {Primary})",
-                    palette.Type, palette.Primary.HexString);
+                // In debug/verbose mode, show all palettes
+                foreach (var palette in palettes.Values.OrderBy(p => p.Type.ToString()))
+                {
+                    _logger.Debug("Loaded palette for {Type} (Primary: {Primary})",
+                        palette.Type, palette.Primary.HexString);
+                }
+            }
+            else
+            {
+                // In normal mode, show first 3 as examples
+                foreach (var palette in palettes.Values.Take(3))
+                {
+                    _logger.Information("Loaded palette for {Type} (Primary: {Primary})",
+                        palette.Type, palette.Primary.HexString);
+                }
             }
 
             return _loadedPalettes;
