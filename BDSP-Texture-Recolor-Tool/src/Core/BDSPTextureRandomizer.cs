@@ -20,6 +20,7 @@ public class BDSPTextureRandomizer : IDisposable
     private readonly TextureCompressionService _compressionService;
     private readonly PokemonDataService? _pokemonDataService;
     private readonly TypeColorMappingService? _typeColorService;
+    private readonly ColorPaletteConfigurationService? _configurationService;
     private readonly ColorAnalysisService? _colorAnalysisService;
     private readonly ColorReplacementService? _colorReplacementService;
     private readonly TypeColorPaletteService? _typeColorPaletteService;
@@ -52,15 +53,36 @@ public class BDSPTextureRandomizer : IDisposable
             }
 
             _pokemonDataService = new PokemonDataService(_options.PokemonDataPath);
-            _typeColorService = new TypeColorMappingService();
+
+            // Initialize YAML color palette configuration service
+            var configPath = _options.ConfigPath ?? "TypeColorPalettes.yaml";
+            _configurationService = new ColorPaletteConfigurationService(configPath);
+            _logger.Information("Initialized YAML color palette configuration service with config path: {ConfigPath}", configPath);
+
+            // Ensure YAML configuration file exists for both ColorReplacement and HueShift algorithms
+            var ensureFileTask = _configurationService.EnsureConfigurationFileExistsAsync();
+            ensureFileTask.Wait();
+            bool fileExists = ensureFileTask.Result;
+
+            if (fileExists)
+            {
+                _logger.Debug("YAML configuration file verified/created successfully");
+            }
+            else
+            {
+                _logger.Warning("Could not ensure YAML configuration file exists, will use hardcoded defaults");
+            }
+
+            // Initialize TypeColorMappingService with YAML configuration support
+            _typeColorService = new TypeColorMappingService(_configurationService);
 
             // Initialize advanced color replacement services if requested
             if (_options.Algorithm == ColorAlgorithm.ColorReplacement)
             {
                 _colorAnalysisService = new ColorAnalysisService();
                 _colorReplacementService = new ColorReplacementService();
-                _typeColorPaletteService = new TypeColorPaletteService();
-                _logger.Information("Initialized advanced color replacement services");
+                _typeColorPaletteService = new TypeColorPaletteService(_configurationService);
+                _logger.Information("Initialized advanced color replacement services with YAML configuration support");
             }
 
             _logger.Information("Initialized type-based randomization services with {Algorithm} algorithm", _options.Algorithm);
@@ -336,6 +358,53 @@ public class BDSPTextureRandomizer : IDisposable
         {
             _logger.Error(ex, "Fatal error during batch import");
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Export default color palette configuration to YAML file
+    /// This allows users to customize type colors without recompiling
+    /// </summary>
+    /// <param name="outputPath">Optional custom path for YAML file</param>
+    /// <returns>True if export was successful</returns>
+    public async Task<bool> ExportDefaultConfigurationAsync(string? outputPath = null)
+    {
+        if (_typeColorPaletteService == null)
+        {
+            _logger.Warning("TypeColorPaletteService not available - initializing temporary service for export");
+
+            // Create a temporary service for exporting even if not in ColorReplacement mode
+            var tempConfigService = new ColorPaletteConfigurationService(outputPath);
+            var tempPaletteService = new TypeColorPaletteService();
+
+            return await tempPaletteService.ExportDefaultConfigurationAsync(outputPath);
+        }
+
+        return await _typeColorPaletteService.ExportDefaultConfigurationAsync(outputPath);
+    }
+
+    /// <summary>
+    /// Check if external YAML configuration is being used
+    /// </summary>
+    public bool IsUsingExternalConfiguration => _typeColorPaletteService?.IsUsingExternalConfiguration ?? false;
+
+    /// <summary>
+    /// Get information about the current color configuration source
+    /// </summary>
+    public string GetConfigurationInfo()
+    {
+        if (_configurationService == null)
+        {
+            return "No YAML configuration service (not in type-based mode)";
+        }
+
+        if (_configurationService.IsExternalConfigurationLoaded)
+        {
+            return $"Using external YAML configuration: {_configurationService.ConfigurationPath}";
+        }
+        else
+        {
+            return $"Using hardcoded defaults (YAML file not found: {_configurationService.ConfigurationPath})";
         }
     }
 

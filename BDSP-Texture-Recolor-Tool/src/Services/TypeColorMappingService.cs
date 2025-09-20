@@ -5,48 +5,130 @@ namespace BDSP.TextureRecolorTool.Services;
 
 /// <summary>
 /// Service for mapping Pokemon types to colors and generating color parameters
+/// Now supports loading HSV colors from external YAML configuration with fallback to hardcoded defaults
 /// </summary>
 public class TypeColorMappingService
 {
     private readonly ILogger _logger;
     private readonly Dictionary<PokemonType, TypeColorInfo> _typeColors;
+    private readonly ColorPaletteConfigurationService? _configurationService;
 
-    public TypeColorMappingService()
+    public TypeColorMappingService(ColorPaletteConfigurationService? configurationService = null)
     {
         _logger = Log.ForContext<TypeColorMappingService>();
+        _configurationService = configurationService;
         _typeColors = InitializeTypeColorMappings();
 
-        _logger.Information("Initialized type color mappings for {Count} Pokemon types", _typeColors.Count);
+        _logger.Information("Initialized type color mappings for {Count} Pokemon types {Source}",
+            _typeColors.Count, _configurationService != null ? "(YAML + fallback)" : "(hardcoded)");
     }
 
     /// <summary>
     /// Initialize the color mappings for all Pokemon types
+    /// First attempts to load from YAML configuration, then falls back to hardcoded defaults
     /// </summary>
     private Dictionary<PokemonType, TypeColorInfo> InitializeTypeColorMappings()
     {
         var mappings = new Dictionary<PokemonType, TypeColorInfo>();
 
-        // Convert each type color to HSV values for consistent color manipulation
-        mappings[PokemonType.Normal] = CreateTypeColor(PokemonType.Normal, "White", 0.0f, 0.0f, 0.95f);
-        mappings[PokemonType.Fighting] = CreateTypeColor(PokemonType.Fighting, "Orange", 0.083f, 0.8f, 0.9f);
-        mappings[PokemonType.Flying] = CreateTypeColor(PokemonType.Flying, "Sky Blue", 0.55f, 0.6f, 0.85f);
-        mappings[PokemonType.Poison] = CreateTypeColor(PokemonType.Poison, "Purple", 0.83f, 0.7f, 0.7f);
-        mappings[PokemonType.Ground] = CreateTypeColor(PokemonType.Ground, "Brown", 0.083f, 0.8f, 0.4f);
-        mappings[PokemonType.Rock] = CreateTypeColor(PokemonType.Rock, "Olive Green", 0.17f, 0.6f, 0.5f);
-        mappings[PokemonType.Bug] = CreateTypeColor(PokemonType.Bug, "Lime Green", 0.25f, 0.8f, 0.8f);
-        mappings[PokemonType.Ghost] = CreateTypeColor(PokemonType.Ghost, "Indigo", 0.75f, 0.8f, 0.5f);
-        mappings[PokemonType.Steel] = CreateTypeColor(PokemonType.Steel, "Silver Gray", 0.0f, 0.1f, 0.7f);
-        mappings[PokemonType.Fire] = CreateTypeColor(PokemonType.Fire, "Red", 0.0f, 0.9f, 0.9f);
-        mappings[PokemonType.Water] = CreateTypeColor(PokemonType.Water, "Deep Blue", 0.67f, 0.8f, 0.6f);
-        mappings[PokemonType.Grass] = CreateTypeColor(PokemonType.Grass, "Forest Green", 0.33f, 0.8f, 0.4f);
-        mappings[PokemonType.Electric] = CreateTypeColor(PokemonType.Electric, "Yellow", 0.17f, 0.9f, 0.95f);
-        mappings[PokemonType.Psychic] = CreateTypeColor(PokemonType.Psychic, "Magenta Pink", 0.92f, 0.7f, 0.8f);
-        mappings[PokemonType.Ice] = CreateTypeColor(PokemonType.Ice, "Cyan", 0.5f, 0.7f, 0.9f);
-        mappings[PokemonType.Dragon] = CreateTypeColor(PokemonType.Dragon, "Navy Blue", 0.67f, 0.9f, 0.4f);
-        mappings[PokemonType.Dark] = CreateTypeColor(PokemonType.Dark, "Black", 0.0f, 0.0f, 0.15f);
-        mappings[PokemonType.Fairy] = CreateTypeColor(PokemonType.Fairy, "Light Pink", 0.92f, 0.4f, 0.95f);
+        // Try to load from YAML configuration first
+        Dictionary<PokemonType, TypeColorInfo>? yamlMappings = null;
+        if (_configurationService != null)
+        {
+            try
+            {
+                yamlMappings = LoadHsvColorsFromYaml();
+                if (yamlMappings?.Count > 0)
+                {
+                    _logger.Debug("Loaded {Count} HSV colors from YAML configuration", yamlMappings.Count);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning(ex, "Failed to load HSV colors from YAML, using hardcoded defaults");
+            }
+        }
+
+        // Initialize with YAML or hardcoded values for each type
+        var allTypes = Enum.GetValues<PokemonType>();
+        foreach (var type in allTypes)
+        {
+            if (yamlMappings?.TryGetValue(type, out var yamlColor) == true)
+            {
+                mappings[type] = yamlColor;
+                _logger.Debug("Using YAML HSV color for {Type}: {Name}", type, yamlColor.Name);
+            }
+            else
+            {
+                // Fallback to hardcoded defaults
+                mappings[type] = GetHardcodedTypeColor(type);
+                _logger.Debug("Using hardcoded HSV color for {Type}", type);
+            }
+        }
 
         return mappings;
+    }
+
+    /// <summary>
+    /// Load HSV colors from YAML configuration using the ExtractHsvColor helper
+    /// </summary>
+    private Dictionary<PokemonType, TypeColorInfo>? LoadHsvColorsFromYaml()
+    {
+        if (_configurationService == null)
+            return null;
+
+        // Get the raw YAML configuration that includes HSV data
+        var yamlConfigTask = _configurationService.LoadRawYamlConfigurationAsync();
+        yamlConfigTask.Wait(); // TODO: make this method async to avoid blocking
+        var yamlConfig = yamlConfigTask.Result;
+
+        if (yamlConfig?.PokemonTypes == null)
+            return null;
+
+        var hsvMappings = new Dictionary<PokemonType, TypeColorInfo>();
+
+        foreach (var kvp in yamlConfig.PokemonTypes)
+        {
+            if (Enum.TryParse<PokemonType>(kvp.Key, true, out var pokemonType))
+            {
+                var hsvColor = YamlConfigurationHelper.ExtractHsvColor(kvp.Value, pokemonType);
+                if (hsvColor != null)
+                {
+                    hsvMappings[pokemonType] = hsvColor;
+                }
+            }
+        }
+
+        return hsvMappings.Count > 0 ? hsvMappings : null;
+    }
+
+    /// <summary>
+    /// Get hardcoded HSV color values as fallback when YAML is not available
+    /// </summary>
+    private TypeColorInfo GetHardcodedTypeColor(PokemonType type)
+    {
+        return type switch
+        {
+            PokemonType.Normal => CreateTypeColor(PokemonType.Normal, "White", 0.0f, 0.0f, 0.95f),
+            PokemonType.Fighting => CreateTypeColor(PokemonType.Fighting, "Orange", 0.083f, 0.8f, 0.9f),
+            PokemonType.Flying => CreateTypeColor(PokemonType.Flying, "Sky Blue", 0.55f, 0.6f, 0.85f),
+            PokemonType.Poison => CreateTypeColor(PokemonType.Poison, "Purple", 0.83f, 0.7f, 0.7f),
+            PokemonType.Ground => CreateTypeColor(PokemonType.Ground, "Brown", 0.083f, 0.8f, 0.4f),
+            PokemonType.Rock => CreateTypeColor(PokemonType.Rock, "Olive Green", 0.17f, 0.6f, 0.5f),
+            PokemonType.Bug => CreateTypeColor(PokemonType.Bug, "Lime Green", 0.25f, 0.8f, 0.8f),
+            PokemonType.Ghost => CreateTypeColor(PokemonType.Ghost, "Indigo", 0.75f, 0.8f, 0.5f),
+            PokemonType.Steel => CreateTypeColor(PokemonType.Steel, "Silver Gray", 0.0f, 0.1f, 0.7f),
+            PokemonType.Fire => CreateTypeColor(PokemonType.Fire, "Red", 0.0f, 0.9f, 0.9f),
+            PokemonType.Water => CreateTypeColor(PokemonType.Water, "Deep Blue", 0.67f, 0.8f, 0.6f),
+            PokemonType.Grass => CreateTypeColor(PokemonType.Grass, "Forest Green", 0.33f, 0.8f, 0.4f),
+            PokemonType.Electric => CreateTypeColor(PokemonType.Electric, "Yellow", 0.17f, 0.9f, 0.95f),
+            PokemonType.Psychic => CreateTypeColor(PokemonType.Psychic, "Magenta Pink", 0.92f, 0.7f, 0.8f),
+            PokemonType.Ice => CreateTypeColor(PokemonType.Ice, "Cyan", 0.5f, 0.7f, 0.9f),
+            PokemonType.Dragon => CreateTypeColor(PokemonType.Dragon, "Navy Blue", 0.67f, 0.9f, 0.4f),
+            PokemonType.Dark => CreateTypeColor(PokemonType.Dark, "Black", 0.0f, 0.0f, 0.15f),
+            PokemonType.Fairy => CreateTypeColor(PokemonType.Fairy, "Light Pink", 0.92f, 0.4f, 0.95f),
+            _ => CreateTypeColor(PokemonType.Normal, "Unknown", 0.0f, 0.0f, 0.95f)
+        };
     }
 
     /// <summary>

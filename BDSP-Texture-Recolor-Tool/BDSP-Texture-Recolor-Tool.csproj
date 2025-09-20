@@ -47,6 +47,9 @@
     <!-- JSON Configuration Support -->
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     
+    <!-- YAML Configuration Support -->
+    <PackageReference Include="YamlDotNet" Version="16.2.0" />
+    
     <!-- Progress Reporting -->
     <PackageReference Include="ShellProgressBar" Version="5.2.0" />
     

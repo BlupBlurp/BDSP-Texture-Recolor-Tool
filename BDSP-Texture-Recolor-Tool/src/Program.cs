@@ -50,6 +50,9 @@ public class Program
 
         [Option("textures-path", Required = false, HelpText = "Path to directory containing PNG textures (for Import operations)")]
         public string? TexturesPath { get; set; }
+
+        [Option("config-path", Required = false, HelpText = "Custom path for YAML configuration file (defaults to TypeColorPalettes.yaml)")]
+        public string? ConfigPath { get; set; }
     }
 
     /// <summary>
@@ -77,6 +80,7 @@ public class Program
         {
             Log.Information("BDSP Texture Recolor Tool v1.2.0");
             Log.Information("==================================");
+
             Log.Information("Input Path: {InputPath}", options.InputPath);
             Log.Information("Output Path: {OutputPath}", options.OutputPath);
 
@@ -158,7 +162,7 @@ public class Program
                 if (string.IsNullOrEmpty(options.PokemonDataPath))
                 {
                     // Try default path relative to the executable
-                    var defaultDataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "PokemonData", "PersonalTable.json");
+                    var defaultDataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PersonalTable.json");
                     if (File.Exists(defaultDataPath))
                     {
                         pokemonDataPath = Path.GetFullPath(defaultDataPath);
@@ -208,7 +212,8 @@ public class Program
                 Algorithm = algorithm,
                 CompressionFormat = compressionFormat,
                 PokemonDataPath = pokemonDataPath,
-                TexturesPath = texturesPath
+                TexturesPath = texturesPath,
+                ConfigPath = options.ConfigPath
             };
 
             // Run the randomizer

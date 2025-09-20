@@ -6,18 +6,40 @@ namespace BDSP.TextureRecolorTool.Services;
 /// <summary>
 /// Service providing comprehensive color palettes for each Pokemon type with multiple color categories
 /// This replaces the simple single-color approach with rich, recognizable type-themed palettes
+/// Now supports external YAML configuration with fallback to hardcoded defaults
 /// </summary>
 public class TypeColorPaletteService
 {
     private readonly ILogger _logger;
     private readonly Dictionary<PokemonType, TypeColorPalette> _typePalettes;
+    private readonly ColorPaletteConfigurationService? _configurationService;
 
-    public TypeColorPaletteService()
+    /// <summary>
+    /// Constructor for dependency injection with configuration service
+    /// </summary>
+    /// <param name="configurationService">Optional configuration service for YAML loading</param>
+    public TypeColorPaletteService(ColorPaletteConfigurationService? configurationService = null)
     {
         _logger = Log.ForContext<TypeColorPaletteService>();
+        _configurationService = configurationService;
         _typePalettes = InitializeTypePalettes();
 
-        _logger.Information("Initialized comprehensive color palettes for {Count} Pokemon types", _typePalettes.Count);
+        if (_configurationService?.IsExternalConfigurationLoaded == true)
+        {
+            _logger.Information("Initialized color palettes for {Count} Pokemon types using YAML configuration", _typePalettes.Count);
+        }
+        else
+        {
+            _logger.Information("Initialized color palettes for {Count} Pokemon types using hardcoded defaults", _typePalettes.Count);
+        }
+    }
+
+    /// <summary>
+    /// Legacy constructor for backward compatibility
+    /// </summary>
+    public TypeColorPaletteService() : this(configurationService: null)
+    {
+        // This constructor maintains backward compatibility for existing code
     }
 
     /// <summary>
@@ -62,10 +84,121 @@ public class TypeColorPaletteService
     }
 
     /// <summary>
+    /// Create a default YAML configuration file with current palette definitions
+    /// This allows users to start customizing colors from the current defaults
+    /// </summary>
+    /// <param name="outputPath">Path where to create the YAML file (optional)</param>
+    /// <returns>True if file was created successfully</returns>
+    public async Task<bool> ExportDefaultConfigurationAsync(string? outputPath = null)
+    {
+        if (_configurationService == null)
+        {
+            var tempConfigService = new ColorPaletteConfigurationService(outputPath);
+            return await tempConfigService.CreateDefaultConfigurationFileAsync(_typePalettes);
+        }
+
+        return await _configurationService.CreateDefaultConfigurationFileAsync(_typePalettes);
+    }
+
+    /// <summary>
+    /// Check if external YAML configuration is being used
+    /// </summary>
+    public bool IsUsingExternalConfiguration => _configurationService?.IsExternalConfigurationLoaded ?? false;
+
+    /// <summary>
     /// Initialize comprehensive color palettes for all Pokemon types
+    /// First attempts to load from YAML configuration, falls back to hardcoded defaults
     /// Each palette includes primary, secondary, accent, dark, light, and neutral colors
+    /// Automatically creates YAML configuration file when missing
     /// </summary>
     private Dictionary<PokemonType, TypeColorPalette> InitializeTypePalettes()
+    {
+        // Try to load from YAML configuration first
+        if (_configurationService != null)
+        {
+            try
+            {
+                var yamlPalettes = _configurationService.LoadColorPalettesAsync().GetAwaiter().GetResult();
+                if (yamlPalettes != null && yamlPalettes.Count > 0)
+                {
+                    _logger.Information("Successfully loaded {Count} type palettes from YAML configuration", yamlPalettes.Count);
+
+                    // Still need to ensure all types are covered - fill in missing types with defaults
+                    var completePalettes = EnsureAllTypesPresent(yamlPalettes);
+                    return completePalettes;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning(ex, "Failed to load YAML configuration, using hardcoded defaults");
+            }
+
+            // If YAML loading failed or returned no results, create default YAML file
+            _logger.Information("Creating default YAML configuration file with hardcoded palette values");
+            var hardcodedPalettes = InitializeHardcodedTypePalettes();
+
+            try
+            {
+                var createFileTask = _configurationService.CreateDefaultConfigurationFileAsync(hardcodedPalettes);
+                createFileTask.Wait();
+                bool created = createFileTask.Result;
+
+                if (created)
+                {
+                    _logger.Information("Successfully created default YAML configuration file at: {Path}", _configurationService.ConfigurationPath);
+                    _logger.Information("You can now edit this file to customize Pokemon type colors");
+                }
+                else
+                {
+                    _logger.Warning("Failed to create default YAML configuration file");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning(ex, "Exception occurred while creating default YAML configuration file");
+            }
+
+            return hardcodedPalettes;
+        }
+
+        // Fallback to hardcoded defaults (no configuration service)
+        _logger.Information("Using hardcoded default color palettes");
+        return InitializeHardcodedTypePalettes();
+    }
+
+    /// <summary>
+    /// Ensure all 18 Pokemon types have palette definitions
+    /// Fill in any missing types with hardcoded defaults
+    /// </summary>
+    private Dictionary<PokemonType, TypeColorPalette> EnsureAllTypesPresent(Dictionary<PokemonType, TypeColorPalette> yamlPalettes)
+    {
+        var hardcodedDefaults = InitializeHardcodedTypePalettes();
+        var completePalettes = new Dictionary<PokemonType, TypeColorPalette>(yamlPalettes);
+
+        int addedCount = 0;
+        foreach (var defaultType in hardcodedDefaults.Keys)
+        {
+            if (!completePalettes.ContainsKey(defaultType))
+            {
+                completePalettes[defaultType] = hardcodedDefaults[defaultType];
+                addedCount++;
+                _logger.Debug("Added missing type {Type} from hardcoded defaults", defaultType);
+            }
+        }
+
+        if (addedCount > 0)
+        {
+            _logger.Information("Added {Count} missing type palettes from hardcoded defaults", addedCount);
+        }
+
+        return completePalettes;
+    }
+
+    /// <summary>
+    /// Initialize hardcoded default color palettes for all Pokemon types
+    /// This is the fallback when YAML configuration is not available
+    /// </summary>
+    private Dictionary<PokemonType, TypeColorPalette> InitializeHardcodedTypePalettes()
     {
         var palettes = new Dictionary<PokemonType, TypeColorPalette>();
 

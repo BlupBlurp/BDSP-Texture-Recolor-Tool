@@ -139,4 +139,9 @@ public class RandomizerOptions
     /// Path to directory containing PNG textures (for Import operations)
     /// </summary>
     public string TexturesPath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Custom path for YAML configuration file (defaults to TypeColorPalettes.yaml)
+    /// </summary>
+    public string? ConfigPath { get; set; }
 }
