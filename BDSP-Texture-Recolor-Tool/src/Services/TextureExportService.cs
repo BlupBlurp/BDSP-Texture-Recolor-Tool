@@ -3,6 +3,7 @@ using AssetsTools.NET.Extra;
 using AssetsTools.NET.Texture;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using BDSP.TextureRecolorTool.Models;
 using Serilog;
 using System.Text.Json;
@@ -81,6 +82,14 @@ public class TextureExportService : IDisposable
             foreach (var dirInfo in bundleFile.BlockAndDirInfo.DirectoryInfos)
             {
                 var assetsFilePath = dirInfo.Name;
+
+                // Skip resource files (.resS). They are not asset files
+                if (assetsFilePath.EndsWith(".resS", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.Debug("Skipping resource file: {ResourceFile}", assetsFilePath);
+                    continue;
+                }
+
                 var assetsFileInstance = _assetsManager.LoadAssetsFileFromBundle(bundleFileInstance, assetsFilePath, false);
 
                 if (assetsFileInstance?.file == null)
@@ -360,6 +369,10 @@ public class TextureExportService : IDisposable
 
             // Create ImageSharp image from RGBA bytes
             var image = Image.LoadPixelData<Rgba32>(decodedBytes, (int)textureFile.m_Width, (int)textureFile.m_Height);
+
+            // Unity textures have the Y axis flipped compared to PNG
+            // I need to flip the image vertically to match the expected orientation
+            image.Mutate(x => x.Flip(FlipMode.Vertical));
 
             _logger.Debug("Successfully created ImageSharp image: {Width}x{Height}", image.Width, image.Height);
             return image;

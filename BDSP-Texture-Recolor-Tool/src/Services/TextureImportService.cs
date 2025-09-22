@@ -3,6 +3,7 @@ using AssetsTools.NET.Extra;
 using AssetsTools.NET.Texture;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using BDSP.TextureRecolorTool.Models;
 using Serilog;
 using System.Text.Json;
@@ -80,6 +81,15 @@ public class TextureImportService : IDisposable
             foreach (var dirInfo in bundleFile.BlockAndDirInfo.DirectoryInfos)
             {
                 var assetsFilePath = dirInfo.Name;
+
+                // CRITICAL FIX: Skip resource files (.resS) - these contain texture data, not asset definitions
+                // CAB-*.resS files are Unity streaming resource files, not assets files
+                if (assetsFilePath.EndsWith(".resS", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.Debug("Skipping resource file: {ResourceFile}", assetsFilePath);
+                    continue;
+                }
+
                 var assetsFileInstance = _assetsManager.LoadAssetsFileFromBundle(bundleFileInstance, assetsFilePath, false);
 
                 if (assetsFileInstance?.file == null)
@@ -219,6 +229,11 @@ public class TextureImportService : IDisposable
 
             // Load the PNG image
             using var image = await Image.LoadAsync<Rgba32>(pngPath);
+
+            // CRITICAL FIX: Flip the image back to Unity's coordinate system
+            // PNG images exported have been flipped from Unity's bottom-left origin to top-left
+            // When importing back, we need to flip them back to Unity's expected orientation
+            image.Mutate(x => x.Flip(FlipMode.Vertical));
 
             // Verify dimensions match
             if (image.Width != exportedTexture.Width || image.Height != exportedTexture.Height)
