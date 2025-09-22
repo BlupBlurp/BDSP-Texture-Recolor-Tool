@@ -78,7 +78,7 @@ public class Program
 
         try
         {
-            Log.Information("BDSP Texture Recolor Tool v1.2.0");
+            Log.Information("BDSP Texture Recolor Tool v1.3.0");
             Log.Information("==================================");
 
             Log.Information("Input Path: {InputPath}", options.InputPath);
